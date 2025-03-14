@@ -130,12 +130,8 @@ def _make_pulses(
     rng = np.random.default_rng(seed)
     while n < ntot:
         size = ntot - n
-        t = rng.choice(p_time[:, 0], size=size, p=p_time[:, 1]) + rng.normal(
-            scale=dt, size=size
-        )
-        w = rng.choice(p_wav[:, 0], size=size, p=p_wav[:, 1]) + rng.normal(
-            scale=dw, size=size
-        )
+        t = rng.choice(x_time, size=size, p=p_time) + rng.normal(scale=dt, size=size)
+        w = rng.choice(x_wav, size=size, p=p_wav) + rng.normal(scale=dw, size=size)
         mask = (t >= tmin) & (t <= tmax) & (w >= wmin) & (w <= wmax)
         times.append(t[mask])
         wavs.append(w[mask])
@@ -147,7 +143,7 @@ def _make_pulses(
         np.concatenate(times),
         # unit=TIME_UNIT,
     ).reshape(pulses, neutrons) + (
-        np.arange(pulses).reshape(1, -1) / frequency
+        np.arange(pulses).reshape(-1, 1) / frequency
     )  # .to(unit=TIME_UNIT, copy=False)
 
     wavelength = np.array(
@@ -220,7 +216,7 @@ class Source:
             )
             ntot = self.neutrons * self.pulses
             self.data = NeutronData(
-                distance=facility_params.distance,
+                distance=0,
                 id=np.arange(ntot),
                 speed=pulse_params["speed"],
                 time=pulse_params["time"],
@@ -364,17 +360,13 @@ class Source:
         bins:
             Number of bins to use for histogramming the neutrons.
         """
-        fig, ax = plt.subplots(1, 2)
-        dim = (set(self.data.dims) - {"pulse"}).pop()
-        collapsed = sc.collapse(self.data, keep=dim)
-        pp.plot(
-            {k: da.hist(time=bins) for k, da in collapsed.items()},
-            ax=ax[0],
-        )
-        pp.plot(
-            {k: da.hist(wavelength=bins) for k, da in collapsed.items()},
-            ax=ax[1],
-        )
+        fig, ax = plt.subplots(1, 2, figsize=(11, 4))
+
+        for i in range(self.pulses):
+            ax[0].hist(self.data.time[i], bins=bins, histtype="step", lw=1.5)
+            ax[1].hist(self.data.wavelength[i], bins=bins, histtype="step", lw=1.5)
+        ax[0].set(xlabel="Time [μs]", ylabel="Counts")
+        ax[1].set(xlabel="Wavelength [Å]", ylabel="Counts")
         fig.set_size_inches(10, 4)
         fig.tight_layout()
         return Plot(fig=fig, ax=ax)
@@ -392,7 +384,7 @@ class Source:
         return (
             f"Source:\n"
             f"  pulses={self.pulses}, neutrons per pulse={self.neutrons}\n"
-            f"  frequency={self.frequency:c}\n  facility='{self.facility}'"
+            f"  frequency={self.frequency}Hz\n  facility='{self.facility}'"
         )
 
 
