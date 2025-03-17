@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
+import dataclasses
 from itertools import chain
 from typing import Union
 
@@ -9,7 +10,7 @@ import numpy as np
 from .chopper import Chopper
 from .detector import Detector
 
-# from .result import Result
+from .result import Result
 from .source import Source
 
 ComponentType = Union[Chopper, Detector]
@@ -130,7 +131,7 @@ class Model:
         """
         components = sorted(
             chain(self.choppers.values(), self.detectors.values()),
-            key=lambda c: c.distance.value,
+            key=lambda c: c.distance,
         )
 
         birth_time = self.source.data.time
@@ -143,7 +144,7 @@ class Model:
         for c in components:
             container = result_detectors if isinstance(c, Detector) else result_choppers
             container[c.name] = c.as_dict()
-            container[c.name]["data"] = self.source.data
+            container[c.name]["data"] = dataclasses.replace(self.source.data)
             t = birth_time + (c.distance / speed) * 1.0e6
             container[c.name]["data"].toa = t
             container[c.name]["data"].distance = c.distance
@@ -163,6 +164,8 @@ class Model:
             container[c.name]["data"].blocked_by_others = ~initial_mask
             container[c.name]["data"].blocked_by_me = ~m & initial_mask
             initial_mask = combined
+
+        # return result_choppers, result_detectors
 
         return Result(
             source=self.source, choppers=result_choppers, detectors=result_detectors

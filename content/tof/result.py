@@ -19,12 +19,15 @@ from .source import Source, SourceParameters
 from .utils import Plot
 
 
-def _make_reading_data(component, dim, is_chopper=False):
+def _make_reading_data(component, is_chopper=False):
     visible = {}
     blocked = {} if is_chopper else None
-    keep_dim = (set(component.dims) - {"pulse"}).pop()
-    for name, da in sc.collapse(component, keep=keep_dim).items():
-        one_mask = ~reduce(lambda a, b: a | b, da.masks.values())
+    # keep_dim = (set(component.dims) - {"pulse"}).pop()
+    # for name, da in sc.collapse(component, keep=keep_dim).items():
+    # for i in range(component.pulses):
+    for i, array in enumerate(component):
+        name = f"pulse:{i}"
+        # one_mask = ~(comp
         vsel = da[one_mask]
         visible[name] = sc.DataArray(data=vsel.data, coords={dim: vsel.coords[dim]})
         if is_chopper:
@@ -118,7 +121,7 @@ class Result:
                 close_times=chopper["close_times"],
                 data=chopper["data"],
                 **{
-                    key: _make_reading_data(chopper["data"], dim=dim, is_chopper=True)
+                    key: _make_reading_data(chopper["data"], is_chopper=True)
                     for key, dim in fields.items()
                 },
             )
@@ -132,7 +135,7 @@ class Result:
                 name=det["name"],
                 data=det["data"],
                 **{
-                    key: _make_reading_data(det["data"], dim=dim)
+                    key: _make_reading_data(det["data"], is_chopper=False)
                     for key, dim in fields.items()
                 },
             )

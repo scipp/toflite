@@ -222,8 +222,8 @@ class Source:
                 time=pulse_params["time"],
                 toa=np.zeros(ntot),
                 wavelength=pulse_params["wavelength"],
-                blocked_by_me=np.zeros(ntot),
-                blocked_by_others=np.zeros(ntot),
+                blocked_by_me=np.zeros(ntot, dtype=bool),
+                blocked_by_others=np.zeros(ntot, dtype=bool),
             )
             # sc.DataArray(
             #     data=sc.ones(sizes=pulse_params["time"].sizes, unit="counts"),

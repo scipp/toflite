@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
+from dataclasses import dataclass
 
-# from .reading import ComponentReading, ReadingField
+from .reading import ComponentReading, ReadingField
+from .utils import NeutronData
 
 
 class Detector:
@@ -29,33 +31,28 @@ class Detector:
         return {"distance": self.distance, "name": self.name}
 
 
-# @dataclass(frozen=True)
-# class DetectorReading(ComponentReading):
-#     """
-#     Read-only container for the neutrons that reach the detector.
-#     """
+@dataclass(frozen=True)
+class DetectorReading(ComponentReading):
+    """
+    Read-only container for the neutrons that reach the detector.
+    """
 
-#     distance: sc.Variable
-#     name: str
-#     data: sc.DataArray
-#     toas: ReadingField
-#     wavelengths: ReadingField
-#     birth_times: ReadingField
-#     speeds: ReadingField
+    distance: float
+    name: str
+    data: NeutronData
+    toas: ReadingField
+    wavelengths: ReadingField
+    birth_times: ReadingField
+    speeds: ReadingField
 
-#     def __repr__(self) -> str:
-#         out = f"DetectorReading: '{self.name}'\n"
-#         out += f"  distance: {self.distance:c}\n"
-#         out += "\n".join(
-#             f"  {key}: {getattr(self, key)}"
-#             for key in ("toas", "wavelengths", "birth_times", "speeds")
-#         )
-#         return out
+    def __repr__(self) -> str:
+        out = f"DetectorReading: '{self.name}'\n"
+        out += f"  distance: {self.distance:c}\n"
+        out += "\n".join(
+            f"  {key}: {getattr(self, key)}"
+            for key in ("toas", "wavelengths", "birth_times", "speeds")
+        )
+        return out
 
-#     def __str__(self) -> str:
-#         return self.__repr__()
-
-#     @property
-#     @deprecated("Use 'toas' instead.")
-#     def tofs(self) -> ReadingField:
-#         return self.toas
+    def __str__(self) -> str:
+        return self.__repr__()

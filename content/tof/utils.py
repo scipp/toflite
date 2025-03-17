@@ -6,36 +6,32 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.constants as const
 
-m_over_h = const.m_n / const.h
+h_over_m = const.h / const.m_n
 two_pi = const.pi * 2.0
 
 
-def speed_to_wavelength(x: np.ndarray) -> np.ndarray:
+def speed_to_wavelength(speed: np.ndarray) -> np.ndarray:
     """
     Convert neutron speeds to wavelengths in angstroms.
 
     Parameters
     ----------
-    x:
-        Input speeds.
-    unit:
-        The unit of the output wavelengths.
+    speed:
+        Input speeds in m/s.
     """
-    return 1.0e10 / (m_over_h * x)
+    return 1.0e10 * h_over_m / speed
 
 
-def wavelength_to_speed(x: np.ndarray, unit: str = "m/s") -> np.ndarray:
+def wavelength_to_speed(wavelength: np.ndarray) -> np.ndarray:
     """
     Convert neutron wavelengths to speeds.
 
     Parameters
     ----------
-    x:
+    wavelength:
         Input wavelengths in angstroms.
-    unit:
-        The unit of the output speeds.
     """
-    return 1.0e-10 / (m_over_h * x)
+    return 1.0e10 * h_over_m / wavelength
 
 
 @dataclass(frozen=True)
@@ -55,6 +51,20 @@ class NeutronData:
     wavelength: np.ndarray
     blocked_by_me: np.ndarray
     blocked_by_others: np.ndarray
+
+    @property
+    def pulses(self) -> int:
+        """
+        The number of pulses in the data.
+        """
+        return self.id.shape[0]
+
+    @property
+    def neutrons(self) -> int:
+        """
+        The number of neutrons in the data.
+        """
+        return self.id.shape[1]
 
 
 @dataclass

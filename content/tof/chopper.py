@@ -2,6 +2,7 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
 import math
+from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Tuple
 
@@ -9,7 +10,7 @@ from typing import Tuple
 import numpy as np
 
 from .reading import ComponentReading, ReadingField
-from .utils import two_pi
+from .utils import NeutronData, two_pi
 
 
 class Direction(Enum):
@@ -122,7 +123,10 @@ class Chopper:
         nrot = max(int(math.ceil(time_limit * 1.0e-6 * self.frequency)), 1)
         # Start at -1 to catch early openings in case the phase or opening angles are
         # large
-        phases = (np.arange(-1, nrot) * two_pi + self.phase).reshape(-1, 1)
+        phases = (np.arange(-1, nrot) * two_pi + np.deg2rad(self.phase)).reshape(-1, 1)
+
+        # print("nrot", nrot)
+        # print("phases", phases)
 
         open_times = np.deg2rad(self.open)
         close_times = np.deg2rad(self.close)
