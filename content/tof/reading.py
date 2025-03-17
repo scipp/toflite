@@ -190,12 +190,12 @@ class ReadingField:
             colors.update({vk: f"C{i}", bk: "gray"})
         fig, ax = plt.subplots()
         for name, array in to_plot.items():
-            ax.plot(ax=ax, label=name, color=colors[name])
-        out = pp.plot(
-            to_plot,
-            **{**{"color": colors}, **kwargs},
-        )
-        return out
+            ax.hist(array, bins=bins, histtype="step", label=name, color=colors[name])
+        # out = pp.plot(
+        #     to_plot,
+        #     **{**{"color": colors}, **kwargs},
+        # )
+        return Plot(fig=fig, ax=ax)
 
 
 class ComponentReading:
