@@ -1,12 +1,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
 import math
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Tuple
 
-# import scipp as sc
 import numpy as np
 
 from .reading import ComponentReading
@@ -90,9 +88,6 @@ class Chopper:
             open = centers - half_width
             close = centers + half_width
 
-        # self.open = (open if open.dims else open.flatten(to="cutout")).to(
-        #     dtype=float, copy=False
-        # )
         self.open = np.asarray(open).astype(float)
         self.close = np.asarray(close).astype(float)
         self.distance = float(distance)
@@ -123,10 +118,9 @@ class Chopper:
         nrot = max(int(math.ceil(time_limit * 1.0e-6 * self.frequency)), 1)
         # Start at -1 to catch early openings in case the phase or opening angles are
         # large
-        phases = (np.arange(-1, nrot) * 2 * np.pi + np.deg2rad(self.phase)).reshape(-1, 1)
-
-        # print("nrot", nrot)
-        # print("phases", phases)
+        phases = (np.arange(-1, nrot) * 2 * np.pi + np.deg2rad(self.phase)).reshape(
+            -1, 1
+        )
 
         open_times = np.deg2rad(self.open)
         close_times = np.deg2rad(self.close)
@@ -137,28 +131,11 @@ class Chopper:
                 (2 * np.pi - close_times)[::-1],
                 (2 * np.pi - open_times)[::-1],
             )
-            #     sc.array(
-            #         dims=close_times.dims,
-            #         values=(two_pi - close_times).values[::-1],
-            #         unit=close_times.unit,
-            #     ),
-            #     sc.array(
-            #         dims=open_times.dims,
-            #         values=(two_pi - open_times).values[::-1],
-            #         unit=open_times.unit,
-            #     ),
-            # )
         # Note that the order is important here: we need (phases + open/close) to get
         # the correct dimension order when we flatten.
         open_times = (phases + open_times).ravel() * 1.0e6 / self.omega
         close_times = (phases + close_times).ravel() * 1.0e6 / self.omega
         return open_times, close_times
-        # open_times /= self.omega
-        # close_times /= self.omega
-        # return (
-        #     open_times.to(unit=unit, copy=False),
-        #     close_times.to(unit=unit, copy=False),
-        # )
 
     def __repr__(self) -> str:
         return (
@@ -198,10 +175,7 @@ class ChopperReading(ComponentReading):
     def _repr_stats(self) -> str:
         neutrons = self.data.size
         blocked = int(self.data.blocked_by_me.sum() + self.data.blocked_by_others.sum())
-        return (
-            f"visible={neutrons - blocked}, "
-            f"blocked={blocked}"
-        )
+        return f"visible={neutrons - blocked}, blocked={blocked}"
 
     def __repr__(self) -> str:
         return f"""ChopperReading: '{self.name}'

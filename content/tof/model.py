@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
 import dataclasses
 from itertools import chain
@@ -17,13 +16,6 @@ ComponentType = Union[Chopper, Detector]
 
 
 def _input_to_dict(
-    # obj: Union[
-    #     None,
-    #     dict[str, ComponentType],
-    #     list[ComponentType],
-    #     tuple[ComponentType, ...],
-    #     ComponentType,
-    # ],
     obj: dict[str, ComponentType]
     | list[ComponentType]
     | tuple[ComponentType, ...]
@@ -149,7 +141,6 @@ class Model:
             container[c.name]["data"].toa = t
             container[c.name]["data"].distance = c.distance
             if isinstance(c, Detector):
-                # container[c.name]["visible_mask"] = initial_mask
                 container[c.name]["data"].blocked_by_others = ~initial_mask
                 continue
             m = np.zeros(t.shape, dtype=bool)
@@ -158,14 +149,9 @@ class Model:
             for i in range(len(to)):
                 m |= (t > to[i]) & (t < tc[i])
             combined = initial_mask & m
-            # container[c.name].update(
-            #     {"visible_mask": combined, "blocked_mask": ~m & initial_mask}
-            # )
             container[c.name]["data"].blocked_by_others = ~initial_mask
             container[c.name]["data"].blocked_by_me = ~m & initial_mask
             initial_mask = combined
-
-        # return result_choppers, result_detectors
 
         return Result(
             source=self.source, choppers=result_choppers, detectors=result_detectors

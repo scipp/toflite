@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
 from dataclasses import dataclass
 
@@ -30,28 +29,8 @@ class ReadingField:
             mask = self.blocked_by_me[i] | self.blocked_by_others[i]
             x = self.values[i][~mask]
             ax.hist(x, bins=bins, histtype="step", lw=1.5)
-            # ax[1].hist(self.data.wavelength[i], bins=bins, histtype="step", lw=1.5)
         ax.set(xlabel=f"{self.name} [{self.unit}]", ylabel="Counts")
-        # ax[1].set(xlabel="Wavelength [Å]", ylabel="Counts")
-        # fig.set_size_inches(10, 4)
-        # fig.tight_layout()
         return Plot(fig=fig, ax=ax)
-
-        by_pulse = sc.collapse(self.data, keep="event")
-        to_plot = {}
-        color = {}
-        for key, da in by_pulse.items():
-            sel = da[~da.masks["blocked_by_others"]]
-            to_plot[key] = sel.hist({self.dim: bins})
-            if "blocked_by_me" in self.data.masks:
-                name = f"blocked-{key}"
-                to_plot[name] = (
-                    da[da.masks["blocked_by_me"]]
-                    .drop_masks(list(da.masks.keys()))
-                    .hist({self.dim: to_plot[key].coords[self.dim]})
-                )
-                color[name] = "gray"
-        return pp.plot(to_plot, **{**{"color": color}, **kwargs})
 
     def min(self):
         mask = self.blocked_by_me | self.blocked_by_others

@@ -34,24 +34,6 @@ def wavelength_to_speed(wavelength: np.ndarray) -> np.ndarray:
     return 1.0e10 * h_over_m / wavelength
 
 
-# def one_mask(
-#     masks: MappingProxyType[str, np.ndarray], unit: str | None = None
-# ) -> np.ndarray:
-#     """
-#     Combine multiple masks into a single mask.
-
-#     Parameters
-#     ----------
-#     masks:
-#         The masks to combine.
-#     unit:
-#         The unit of the output mask.
-#     """
-#     out = reduce(lambda a, b: a | b, masks.values())
-#     out.unit = unit
-#     return out
-
-
 @dataclass(frozen=True)
 class FacilityPulse:
     birth_time: np.ndarray

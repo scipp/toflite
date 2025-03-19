@@ -1,28 +1,25 @@
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 
-from .chopper import AntiClockwise, Chopper, Clockwise
-
-from .detector import Detector
+from .chopper import AntiClockwise, Chopper, ChopperReading, Clockwise
+from .detector import Detector, DetectorReading
 from .facilities import library as facilities
-
 from .model import Model
-# from .reading import ComponentReading, ReadingData, ReadingField
+from .reading import ComponentReading, ReadingField
 from .result import Result
 from .source import Source, SourceParameters
 
 __all__ = [
     "AntiClockwise",
     "Chopper",
-    # "ChopperReading",
+    "ChopperReading",
     "Clockwise",
-    # "ComponentReading",
+    "ComponentReading",
     "Detector",
-    # "DetectorReading",
+    "DetectorReading",
     "facilities",
     "Model",
-    # "ReadingData",
-    # "ReadingField",
+    "ReadingData",
+    "ReadingField",
     "Result",
     "Source",
     "SourceParameters",
