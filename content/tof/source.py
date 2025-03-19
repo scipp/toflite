@@ -168,13 +168,17 @@ class Source:
             ntot = self.neutrons * self.pulses
             self.data = NeutronData(
                 distance=0,
-                id=np.arange(ntot),
+                id=np.arange(ntot).reshape(self.pulses, self.neutrons),
                 speed=pulse_params["speed"],
                 birth_time=pulse_params["birth_time"],
-                toa=np.zeros(ntot),
+                toa=np.zeros(ntot).reshape(self.pulses, self.neutrons),
                 wavelength=pulse_params["wavelength"],
-                blocked_by_me=np.zeros(ntot, dtype=bool),
-                blocked_by_others=np.zeros(ntot, dtype=bool),
+                blocked_by_me=np.zeros(ntot, dtype=bool).reshape(
+                    self.pulses, self.neutrons
+                ),
+                blocked_by_others=np.zeros(ntot, dtype=bool).reshape(
+                    self.pulses, self.neutrons
+                ),
             )
 
     def __len__(self) -> int:

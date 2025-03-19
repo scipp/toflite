@@ -65,7 +65,8 @@ class ReadingField:
         mask = self.blocked_by_me | self.blocked_by_others
         coord = self.values[~mask]
         return (
-            f"{self.dim}: min={coord.min()}, max={coord.max()}, " f"events={coord.size}"
+            f"{self.name} [{self.unit}]: min={coord.min()}, max={coord.max()}, "
+            f"events={coord.size}"
         )
 
     def __str__(self) -> str:

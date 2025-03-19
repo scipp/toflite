@@ -149,7 +149,7 @@ class Model:
             container[c.name]["data"].toa = t
             container[c.name]["data"].distance = c.distance
             if isinstance(c, Detector):
-                container[c.name]["visible_mask"] = initial_mask
+                # container[c.name]["visible_mask"] = initial_mask
                 container[c.name]["data"].blocked_by_others = ~initial_mask
                 continue
             m = np.zeros(t.shape, dtype=bool)
@@ -158,9 +158,9 @@ class Model:
             for i in range(len(to)):
                 m |= (t > to[i]) & (t < tc[i])
             combined = initial_mask & m
-            container[c.name].update(
-                {"visible_mask": combined, "blocked_mask": ~m & initial_mask}
-            )
+            # container[c.name].update(
+            #     {"visible_mask": combined, "blocked_mask": ~m & initial_mask}
+            # )
             container[c.name]["data"].blocked_by_others = ~initial_mask
             container[c.name]["data"].blocked_by_me = ~m & initial_mask
             initial_mask = combined
