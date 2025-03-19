@@ -3,20 +3,19 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from functools import reduce
 from itertools import chain
-from types import MappingProxyType
 from typing import Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.collections import LineCollection
 
-from .chopper import  ChopperReading
-from .detector import  DetectorReading
+from .chopper import ChopperReading
+from .detector import DetectorReading
+
 # from .reading import ReadingData, ReadingField
-from .source import Source, SourceParameters
+from .source import Source
 from .utils import Plot
 
 
@@ -77,9 +76,9 @@ def _add_rays(
         coll.set_color("lightgray")
     ax.add_collection(coll)
 
+
 # @dataclass(frozen=True)
 class Result:
-
     # source: Source
     # choppers: dict
     # detectors: dict
@@ -98,15 +97,15 @@ class Result:
             # self._masks[name] = chopper['visible_mask']
             # self._arrival_times[name] = chopper['data'].coords['toa']
             self.choppers[name] = ChopperReading(
-                distance=chopper['distance'],
-                name=chopper['name'],
-                frequency=chopper['frequency'],
-                open=chopper['open'],
-                close=chopper['close'],
-                phase=chopper['phase'],
-                open_times=chopper['open_times'],
-                close_times=chopper['close_times'],
-                data=chopper['data'],
+                distance=chopper["distance"],
+                name=chopper["name"],
+                frequency=chopper["frequency"],
+                open=chopper["open"],
+                close=chopper["close"],
+                phase=chopper["phase"],
+                open_times=chopper["open_times"],
+                close_times=chopper["close_times"],
+                data=chopper["data"],
             )
 
         self.detectors = {}
@@ -114,7 +113,7 @@ class Result:
             # self._masks[name] = det['visible_mask']
             # self._arrival_times[name] = det['data'].coords['toa']
             self.detectors[name] = DetectorReading(
-                distance=det['distance'], name=det['name'], data=det['data']
+                distance=det["distance"], name=det["name"], data=det["data"]
             )
 
         # self._choppers = MappingProxyType(self._choppers)
@@ -242,7 +241,7 @@ class Result:
 
     def plot(
         self,
-        max_rays: int = 1000,
+        visible_rays: int = 1000,
         blocked_rays: int = 0,
         figsize: Optional[Tuple[float, float]] = None,
         ax: Optional[plt.Axes] = None,
@@ -259,7 +258,7 @@ class Result:
 
         Parameters
         ----------
-        max_rays:
+        visible_rays:
             Maximum number of rays to plot.
         blocked_rays:
             Number of blocked rays to plot.
@@ -280,25 +279,25 @@ class Result:
             chain(self._choppers.values(), self._detectors.values()),
             key=lambda x: x.distance,
         )
-        wavelengths = sc.DataArray(
-            data=furthest_component.data.coords["wavelength"],
-            masks=furthest_component.data.masks,
-        )
+        # wavelengths = sc.DataArray(
+        #     data=furthest_component.data.coords["wavelength"],
+        #     masks=furthest_component.data.masks,
+        # )
         for i in range(self._source.data.sizes["pulse"]):
-            self._plot_blocked_rays(
-                blocked_rays=blocked_rays,
-                pulse_index=i,
-                furthest_detector=furthest_component,
-                ax=ax,
-            )
+            # self._plot_blocked_rays(
+            #     blocked_rays=blocked_rays,
+            #     pulse_index=i,
+            #     furthest_detector=furthest_component,
+            #     ax=ax,
+            # )
             self._plot_visible_rays(
-                max_rays=max_rays,
+                nrays=visible_rays,
                 pulse_index=i,
                 furthest_detector=furthest_component,
                 ax=ax,
                 cbar=cbar and (i == 0),
-                wmin=wavelengths.min(),
-                wmax=wavelengths.max(),
+                wmin=0,
+                wmax=20,
                 cmap=cmap,
             )
             self._plot_pulse(pulse_index=i, ax=ax)
