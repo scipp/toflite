@@ -134,7 +134,7 @@ class Model:
             key=lambda c: c.distance,
         )
 
-        birth_time = self.source.data.time
+        birth_time = self.source.data.birth_time
         speed = self.source.data.speed
         initial_mask = np.ones(birth_time.shape, dtype=bool)
 

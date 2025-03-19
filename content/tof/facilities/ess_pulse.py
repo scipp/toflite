@@ -11,7 +11,7 @@ import numpy as np
 from ..utils import FacilityPulse
 
 pulse = FacilityPulse(
-    time=np.array(
+    birth_time=np.array(
         [
             [
                 1.24378109e01,

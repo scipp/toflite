@@ -54,7 +54,7 @@ def wavelength_to_speed(wavelength: np.ndarray) -> np.ndarray:
 
 @dataclass(frozen=True)
 class FacilityPulse:
-    time: np.ndarray
+    birth_time: np.ndarray
     wavelength: np.ndarray
     frequency: float
 
@@ -64,7 +64,7 @@ class NeutronData:
     distance: float
     id: np.ndarray
     speed: np.ndarray
-    time: np.ndarray
+    birth_time: np.ndarray
     toa: np.ndarray
     wavelength: np.ndarray
     blocked_by_me: np.ndarray

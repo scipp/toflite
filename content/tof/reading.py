@@ -31,7 +31,7 @@ class ReadingField:
             x = self.values[i][~mask]
             ax.hist(x, bins=bins, histtype="step", lw=1.5)
             # ax[1].hist(self.data.wavelength[i], bins=bins, histtype="step", lw=1.5)
-        ax.set(xlabel=self.name, ylabel="Counts")
+        ax.set(xlabel=f"{self.name} [{self.unit}]", ylabel="Counts")
         # ax[1].set(xlabel="Wavelength [Å]", ylabel="Counts")
         # fig.set_size_inches(10, 4)
         # fig.tight_layout()
