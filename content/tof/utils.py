@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from dataclasses import dataclass
+from functools import reduce
+from types import MappingProxyType
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -34,11 +36,32 @@ def wavelength_to_speed(wavelength: np.ndarray) -> np.ndarray:
     return 1.0e10 * h_over_m / wavelength
 
 
+def one_mask(
+    masks: MappingProxyType[str, np.ndarray], unit: str | None = None
+) -> np.ndarray:
+    """
+    Combine multiple masks into a single mask.
+
+    Parameters
+    ----------
+    masks:
+        The masks to combine.
+    unit:
+        The unit of the output mask.
+    """
+    out = reduce(lambda a, b: a | b, masks.values())
+    out.unit = unit
+    return out
+
+
 @dataclass(frozen=True)
 class FacilityPulse:
     time: np.ndarray
     wavelength: np.ndarray
     frequency: float
+
+
+
 
 
 @dataclass
@@ -62,9 +85,16 @@ class NeutronData:
     @property
     def neutrons(self) -> int:
         """
-        The number of neutrons in the data.
+        The number of neutrons in one pulse.
         """
         return self.id.shape[1]
+
+    @property
+    def size(self) -> int:
+        """
+        The total number of neutrons in the data.
+        """
+        return self.id.size
 
 
 @dataclass

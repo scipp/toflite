@@ -9,8 +9,8 @@ from typing import Tuple
 # import scipp as sc
 import numpy as np
 
-from .reading import ComponentReading, ReadingField
-from .utils import NeutronData, two_pi
+from .reading import ComponentReading
+from .utils import NeutronData
 
 
 class Direction(Enum):
@@ -105,7 +105,7 @@ class Chopper:
         """
         The angular velocity of the chopper.
         """
-        return two_pi * self.frequency
+        return 2 * np.pi * self.frequency
 
     def open_close_times(
         self, time_limit: float = 0.0
@@ -123,7 +123,7 @@ class Chopper:
         nrot = max(int(math.ceil(time_limit * 1.0e-6 * self.frequency)), 1)
         # Start at -1 to catch early openings in case the phase or opening angles are
         # large
-        phases = (np.arange(-1, nrot) * two_pi + np.deg2rad(self.phase)).reshape(-1, 1)
+        phases = (np.arange(-1, nrot) * 2 * np.pi + np.deg2rad(self.phase)).reshape(-1, 1)
 
         # print("nrot", nrot)
         # print("phases", phases)
@@ -134,8 +134,8 @@ class Chopper:
         # first cutout will be the last to open.
         if self.direction == AntiClockwise:
             open_times, close_times = (
-                (two_pi - close_times)[::-1],
-                (two_pi - open_times)[::-1],
+                (2 * np.pi - close_times)[::-1],
+                (2 * np.pi - open_times)[::-1],
             )
             #     sc.array(
             #         dims=close_times.dims,
@@ -194,22 +194,23 @@ class ChopperReading(ComponentReading):
     open_times: float
     close_times: float
     data: NeutronData
-    toas: ReadingField
-    wavelengths: ReadingField
-    birth_times: ReadingField
-    speeds: ReadingField
+
+    def _repr_stats(self) -> str:
+        neutrons = self.data.size
+        blocked = int(self.data.blocked_by_me.sum() + self.data.blocked_by_others.sum())
+        return (
+            f"visible={neutrons - blocked}, "
+            f"blocked={blocked}"
+        )
 
     def __repr__(self) -> str:
-        out = f"ChopperReading: '{self.name}'\n"
-        out += f"  distance: {self.distance}\n"
-        out += f"  frequency: {self.frequency}\n"
-        out += f"  phase: {self.phase}\n"
-        out += f"  cutouts: {len(self.open)}\n"
-        out += "\n".join(
-            f"  {key}: {getattr(self, key)}"
-            for key in ("toas", "wavelengths", "birth_times", "speeds")
-        )
-        return out
+        return f"""ChopperReading: '{self.name}'
+  distance: {self.distance}
+  frequency: {self.frequency}
+  phase: {self.phase}
+  cutouts: {len(self.open)}
+  neutrons: {self._repr_stats()}
+"""
 
     def __str__(self) -> str:
         return self.__repr__()

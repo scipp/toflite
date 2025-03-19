@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from functools import reduce
 from itertools import chain
 from types import MappingProxyType
@@ -12,33 +13,33 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.collections import LineCollection
 
-from .chopper import Chopper, ChopperReading
-from .detector import Detector, DetectorReading
-from .reading import ReadingData, ReadingField
+from .chopper import  ChopperReading
+from .detector import  DetectorReading
+# from .reading import ReadingData, ReadingField
 from .source import Source, SourceParameters
 from .utils import Plot
 
 
-def _make_reading_data(component, is_chopper=False):
-    visible = {}
-    blocked = {} if is_chopper else None
-    # keep_dim = (set(component.dims) - {"pulse"}).pop()
-    # for name, da in sc.collapse(component, keep=keep_dim).items():
-    # for i in range(component.pulses):
-    for i, array in enumerate(component):
-        name = f"pulse:{i}"
-        # one_mask = ~(comp
-        vsel = da[one_mask]
-        visible[name] = sc.DataArray(data=vsel.data, coords={dim: vsel.coords[dim]})
-        if is_chopper:
-            bsel = da[da.masks["blocked_by_me"]]
-            blocked[name] = sc.DataArray(data=bsel.data, coords={dim: bsel.coords[dim]})
-    return ReadingField(
-        visible=ReadingData(data=sc.DataGroup(visible), dim=dim),
-        blocked=(
-            ReadingData(data=sc.DataGroup(blocked), dim=dim) if is_chopper else None
-        ),
-    )
+# def _make_reading_data(component, is_chopper=False):
+#     visible = {}
+#     blocked = {} if is_chopper else None
+#     # keep_dim = (set(component.dims) - {"pulse"}).pop()
+#     # for name, da in sc.collapse(component, keep=keep_dim).items():
+#     # for i in range(component.pulses):
+#     for i, array in enumerate(component):
+#         name = f"pulse:{i}"
+#         # one_mask = ~(comp
+#         vsel = da[one_mask]
+#         visible[name] = sc.DataArray(data=vsel.data, coords={dim: vsel.coords[dim]})
+#         if is_chopper:
+#             bsel = da[da.masks["blocked_by_me"]]
+#             blocked[name] = sc.DataArray(data=bsel.data, coords={dim: bsel.coords[dim]})
+#     return ReadingField(
+#         visible=ReadingData(data=sc.DataGroup(visible), dim=dim),
+#         blocked=(
+#             ReadingData(data=sc.DataGroup(blocked), dim=dim) if is_chopper else None
+#         ),
+#     )
 
 
 def _add_rays(
@@ -76,89 +77,65 @@ def _add_rays(
         coll.set_color("lightgray")
     ax.add_collection(coll)
 
-
+# @dataclass(frozen=True)
 class Result:
-    """
-    Result of a simulation.
 
-    Parameters
-    ----------
-    source:
-        The source of neutrons.
-    choppers:
-        The choppers in the model.
-    detectors:
-        The detectors in the model.
-    """
+    # source: Source
+    # choppers: dict
+    # detectors: dict
 
     def __init__(
         self,
         source: Source,
-        choppers: dict[str, Chopper],
-        detectors: dict[str, Detector],
+        choppers: dict,
+        detectors: dict,
     ):
-        self._source = source.as_readonly()
-        self._masks = {}
-        self._arrival_times = {}
-        self._choppers = {}
-        fields = {
-            "toas": "toa",
-            "wavelengths": "wavelength",
-            "birth_times": "time",
-            "speeds": "speed",
-        }
+        self.source = source.as_readonly()
+        # self._masks = {}
+        # self._arrival_times = {}
+        self.choppers = {}
         for name, chopper in choppers.items():
-            self._masks[name] = chopper["visible_mask"]
-            self._arrival_times[name] = chopper["data"].toa
-            self._choppers[name] = ChopperReading(
-                distance=chopper["distance"],
-                name=chopper["name"],
-                frequency=chopper["frequency"],
-                open=chopper["open"],
-                close=chopper["close"],
-                phase=chopper["phase"],
-                open_times=chopper["open_times"],
-                close_times=chopper["close_times"],
-                data=chopper["data"],
-                **{
-                    key: _make_reading_data(chopper["data"], is_chopper=True)
-                    for key, dim in fields.items()
-                },
+            # self._masks[name] = chopper['visible_mask']
+            # self._arrival_times[name] = chopper['data'].coords['toa']
+            self.choppers[name] = ChopperReading(
+                distance=chopper['distance'],
+                name=chopper['name'],
+                frequency=chopper['frequency'],
+                open=chopper['open'],
+                close=chopper['close'],
+                phase=chopper['phase'],
+                open_times=chopper['open_times'],
+                close_times=chopper['close_times'],
+                data=chopper['data'],
             )
 
-        self._detectors = {}
+        self.detectors = {}
         for name, det in detectors.items():
-            self._masks[name] = det["visible_mask"]
-            self._arrival_times[name] = det["data"].toa
-            self._detectors[name] = DetectorReading(
-                distance=det["distance"],
-                name=det["name"],
-                data=det["data"],
-                **{
-                    key: _make_reading_data(det["data"], is_chopper=False)
-                    for key, dim in fields.items()
-                },
+            # self._masks[name] = det['visible_mask']
+            # self._arrival_times[name] = det['data'].coords['toa']
+            self.detectors[name] = DetectorReading(
+                distance=det['distance'], name=det['name'], data=det['data']
             )
 
-        self._choppers = MappingProxyType(self._choppers)
-        self._detectors = MappingProxyType(self._detectors)
-        self._masks = MappingProxyType(self._masks)
-        self._arrival_times = MappingProxyType(self._arrival_times)
+        # self._choppers = MappingProxyType(self._choppers)
+        # self._detectors = MappingProxyType(self._detectors)
+        # self._masks = MappingProxyType(self._masks)
+        # self._arrival_times = MappingProxyType(self._arrival_times)
 
-    @property
-    def choppers(self) -> MappingProxyType[str, ChopperReading]:
-        """The choppers in the model."""
-        return self._choppers
+    # @property
+    # def choppers(self) -> MappingProxyType[str, ChopperReading]:
+    #     """The choppers in the model."""
+    #     return self._choppers
 
-    @property
-    def detectors(self) -> MappingProxyType[str, DetectorReading]:
-        """The detectors in the model."""
-        return self._detectors
+    # @property
+    # def detectors(self) -> MappingProxyType[str, DetectorReading]:
+    #     """The detectors in the model."""
+    #     return self._detectors
 
-    @property
-    def source(self) -> SourceParameters:
-        """The source of neutrons."""
-        return self._source
+    # @property
+    # def source(self) -> SourceParameters:
+    #     """The source of neutrons."""
+    #     return self._source
 
     def __iter__(self):
         return chain(self._choppers, self._detectors)
@@ -375,22 +352,22 @@ class Result:
         fig.tight_layout()
         return Plot(fig=fig, ax=ax)
 
-    def __repr__(self) -> str:
-        source_sizes = self._source.data.sizes
-        other_dim = (set(source_sizes) - {"pulse"}).pop()
-        out = (
-            f"Result:\n  Source: {source_sizes['pulse']} pulses, "
-            f"{source_sizes[other_dim]} neutrons per pulse.\n  Choppers:\n"
-        )
-        for name, ch in self._choppers.items():
-            out += f"    {name}: {ch.toas._repr_string_body()}\n"
-        out += "  Detectors:\n"
-        for name, det in self._detectors.items():
-            out += f"    {name}: {det.toas._repr_string_body()}\n"
-        return out
+    # def __repr__(self) -> str:
+    #     source_sizes = self._source.data.sizes
+    #     other_dim = (set(source_sizes) - {"pulse"}).pop()
+    #     out = (
+    #         f"Result:\n  Source: {source_sizes['pulse']} pulses, "
+    #         f"{source_sizes[other_dim]} neutrons per pulse.\n  Choppers:\n"
+    #     )
+    #     for name, ch in self._choppers.items():
+    #         out += f"    {name}: {ch.toas._repr_string_body()}\n"
+    #     out += "  Detectors:\n"
+    #     for name, det in self._detectors.items():
+    #         out += f"    {name}: {det.toas._repr_string_body()}\n"
+    #     return out
 
-    def __str__(self) -> str:
-        return self.__repr__()
+    # def __str__(self) -> str:
+    #     return self.__repr__()
 
     # def to_nxevent_data(self, key: Optional[str] = None) -> sc.DataArray:
     #     """

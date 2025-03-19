@@ -360,7 +360,7 @@ class Source:
         bins:
             Number of bins to use for histogramming the neutrons.
         """
-        fig, ax = plt.subplots(1, 2, figsize=(11, 4))
+        fig, ax = plt.subplots(1, 2)
 
         for i in range(self.pulses):
             ax[0].hist(self.data.time[i], bins=bins, histtype="step", lw=1.5)

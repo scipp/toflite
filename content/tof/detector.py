@@ -3,7 +3,7 @@
 
 from dataclasses import dataclass
 
-from .reading import ComponentReading, ReadingField
+from .reading import ComponentReading
 from .utils import NeutronData
 
 
@@ -40,19 +40,17 @@ class DetectorReading(ComponentReading):
     distance: float
     name: str
     data: NeutronData
-    toas: ReadingField
-    wavelengths: ReadingField
-    birth_times: ReadingField
-    speeds: ReadingField
+
+    def _repr_stats(self) -> str:
+        neutrons = self.data.size
+        blocked = int(self.data.blocked_by_me.sum() + self.data.blocked_by_others.sum())
+        return f"visible={neutrons - blocked}"
 
     def __repr__(self) -> str:
-        out = f"DetectorReading: '{self.name}'\n"
-        out += f"  distance: {self.distance:c}\n"
-        out += "\n".join(
-            f"  {key}: {getattr(self, key)}"
-            for key in ("toas", "wavelengths", "birth_times", "speeds")
-        )
-        return out
+        return f"""DetectorReading: '{self.name}'
+  distance: {self.distance}
+  neutrons: {self._repr_stats()}
+"""
 
     def __str__(self) -> str:
         return self.__repr__()

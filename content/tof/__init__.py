@@ -7,22 +7,22 @@ from .detector import Detector
 from .facilities import library as facilities
 
 from .model import Model
-from .reading import ComponentReading, ReadingData, ReadingField
+# from .reading import ComponentReading, ReadingData, ReadingField
 from .result import Result
 from .source import Source, SourceParameters
 
 __all__ = [
     "AntiClockwise",
     "Chopper",
-    "ChopperReading",
+    # "ChopperReading",
     "Clockwise",
-    "ComponentReading",
+    # "ComponentReading",
     "Detector",
-    "DetectorReading",
+    # "DetectorReading",
     "facilities",
     "Model",
-    "ReadingData",
-    "ReadingField",
+    # "ReadingData",
+    # "ReadingField",
     "Result",
     "Source",
     "SourceParameters",
