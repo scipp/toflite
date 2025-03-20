@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from itertools import chain
-from typing import Optional, Tuple
+from typing import Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,6 +22,7 @@ def _add_rays(
     color: np.ndarray | str,
     cbar: bool = True,
     cmap: str = "gist_rainbow_r",
+    cax: plt.Axes | None = None,
     zorder: int = 1,
 ):
     coll = LineCollection(np.stack((x, y), axis=2), zorder=zorder)
@@ -31,7 +32,7 @@ def _add_rays(
         coll.set_cmap(plt.colormaps[cmap])
         coll.set_array(color)
         if cbar:
-            cb = plt.colorbar(coll, ax=ax)
+            cb = plt.colorbar(coll, ax=ax, cax=cax)
             cb.ax.yaxis.set_label_coords(-0.9, 0.5)
             cb.set_label("Wavelength [Å]")
     ax.add_collection(coll)
@@ -64,8 +65,9 @@ class Result:
         self,
         visible_rays: int = 1000,
         blocked_rays: int = 0,
-        figsize: Optional[Tuple[float, float]] = None,
-        ax: Optional[plt.Axes] = None,
+        figsize: Tuple[float, float] | None = None,
+        ax: plt.Axes | None = None,
+        cax: plt.Axes | None = None,
         cbar: bool = True,
         cmap: str = "gist_rainbow_r",
     ) -> Plot:
@@ -87,6 +89,8 @@ class Result:
             Figure size.
         ax:
             Axes to plot on.
+        cax:
+            Axes to use for the colorbar.
         cbar:
             Show a colorbar for the wavelength if ``True``.
         cmap:
@@ -130,6 +134,7 @@ class Result:
                 color=self.source.data.wavelength[i][inds],
                 cbar=cbar and (i == 0),
                 cmap=cmap,
+                cax=cax,
             )
 
             # Plot blocked rays

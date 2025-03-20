@@ -15,9 +15,6 @@ class ReadingField:
     values: np.ndarray
     blocked_by_me: np.ndarray
     blocked_by_others: np.ndarray
-    # class ReadingField:
-    #     data: sc.DataArray
-    #     dim: str
 
     def plot(self, bins: int = 300, ax=None, **kwargs):
         if ax is None:
@@ -28,7 +25,8 @@ class ReadingField:
         for i in range(len(self.values)):
             mask = self.blocked_by_me[i] | self.blocked_by_others[i]
             x = self.values[i][~mask]
-            ax.hist(x, bins=bins, histtype="step", lw=1.5)
+            ax.hist(x, bins=bins, histtype="step", lw=1.5, label=f"Pulse {i}", **kwargs)
+        ax.legend()
         ax.set(xlabel=f"{self.name} [{self.unit}]", ylabel="Counts")
         return Plot(fig=fig, ax=ax)
 
