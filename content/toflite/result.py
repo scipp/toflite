@@ -175,7 +175,11 @@ class Result:
             ax.plot([tmin, time_coord.max()], [0, 0], color="gray", lw=3)
             ax.text(tmin, 0, "Pulse", ha="left", va="top", color="gray")
 
-        toa_max = furthest_component.toa.max()
+        data = furthest_component.data
+        if data.blocked_by_me.sum() + data.blocked_by_others.sum() == data.size:
+            toa_max = data.toa.max()
+        else:
+            toa_max = furthest_component.toa.max()
         dx = 0.05 * toa_max
         # Plot choppers
         for ch in self.choppers.values():

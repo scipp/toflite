@@ -14,11 +14,15 @@ from .model import Model
 
 class ChopperWidget(ipw.VBox):
     def __init__(self):
-        self.frequency_widget = ipw.FloatText(description="Frequency")
+        self.frequency_widget = ipw.FloatText(
+            description="Frequency", continuous_update=True
+        )
         self.open_widget = ipw.Text(description="Open")
         self.close_widget = ipw.Text(description="Close")
-        self.phase_widget = ipw.FloatText(description="Phase")
-        self.distance_widget = ipw.FloatText(description="Distance")
+        self.phase_widget = ipw.FloatText(description="Phase", continuous_update=True)
+        self.distance_widget = ipw.FloatText(
+            description="Distance", continuous_update=True
+        )
         self.name_widget = ipw.Text(description="Name")
         self.direction_widget = ipw.Dropdown(
             options=["clockwise", "anti-clockwise"], description="Direction"
@@ -39,7 +43,9 @@ class ChopperWidget(ipw.VBox):
 
 class DetectorWidget(ipw.VBox):
     def __init__(self):
-        self.distance_widget = ipw.FloatText(description="Distance")
+        self.distance_widget = ipw.FloatText(
+            description="Distance", continuous_update=True
+        )
         self.name_widget = ipw.Text(description="Name")
         super().__init__(
             [self.name_widget, self.distance_widget],
@@ -62,6 +68,12 @@ class TofWidget:
         self.top_bar = ipw.HBox()
 
         self.run_button = ipw.Button(description="Run")
+        self.visible_rays = ipw.IntText(
+            description="Visible rays", value=1000, continuous_update=True
+        )
+        self.blocked_rays = ipw.IntText(
+            description="Blocked rays", value=0, continuous_update=True
+        )
         with plt.ioff():
             self.time_distance_fig, self.time_distance_ax = plt.subplots(figsize=(8, 6))
             divider = make_axes_locatable(self.time_distance_ax)
@@ -92,13 +104,20 @@ class TofWidget:
         self.tab.children = children
         self.tab.titles = tab_contents
         self.top_bar.children = [
-            ipw.VBox([self.run_button, self.time_distance_fig.canvas]),
+            ipw.VBox(
+                [
+                    ipw.HBox([self.run_button, self.visible_rays, self.blocked_rays]),
+                    self.time_distance_fig.canvas,
+                ]
+            ),
             self.tab,
         ]
 
         self.choppers_widget.children[0].on_click(self.add_chopper)
         self.detectors_widget.children[0].on_click(self.add_detector)
         self.run_button.on_click(self.run)
+        self.visible_rays.observe(self.plot_time_distance, names="value")
+        self.blocked_rays.observe(self.plot_time_distance, names="value")
 
         self.main_widget = ipw.VBox([self.top_bar, self.toa_wav_fig.canvas])
 
@@ -112,8 +131,8 @@ class TofWidget:
     def add_chopper(self, _):
         new_chopper = ChopperWidget()
         new_chopper.name_widget.observe(self.sync_chopper_titles)
-        new_chopper.frequency_widget.observe(self.sync_chopper_titles)
-        new_chopper.distance_widget.observe(self.sync_chopper_titles)
+        new_chopper.frequency_widget.observe(self.sync_chopper_titles, names="value")
+        new_chopper.distance_widget.observe(self.sync_chopper_titles, names="value")
         children = (*self.choppers_container.children, new_chopper)
         self.choppers_container.children = children
         self.choppers_container.selected_index = len(children) - 1
@@ -126,11 +145,22 @@ class TofWidget:
 
     def add_detector(self, _):
         new_detector = DetectorWidget()
-        new_detector.name_widget.observe(self.sync_detector_titles)
-        new_detector.distance_widget.observe(self.sync_detector_titles)
+        new_detector.name_widget.observe(self.sync_detector_titles, names="value")
+        new_detector.distance_widget.observe(self.sync_detector_titles, names="value")
         children = (*self.detectors_container.children, new_detector)
         self.detectors_container.children = children
         self.detectors_container.selected_index = len(children) - 1
+
+    def plot_time_distance(self, _=None):
+        self.time_distance_ax.clear()
+        self.time_distance_cax.clear()
+        self.results.plot(
+            ax=self.time_distance_ax,
+            cax=self.time_distance_cax,
+            visible_rays=self.visible_rays.value,
+            blocked_rays=self.blocked_rays.value,
+        )
+        self.time_distance_fig.tight_layout()
 
     def run(self, _):
         source = Source(
@@ -160,9 +190,7 @@ class TofWidget:
 
         model = Model(source=source, choppers=choppers, detectors=detectors)
         self.results = model.run()
-        self.time_distance_ax.clear()
-        self.time_distance_cax.clear()
-        self.results.plot(ax=self.time_distance_ax, cax=self.time_distance_cax)
+        self.plot_time_distance()
 
         components = sorted(
             chain(self.results.choppers.values(), self.results.detectors.values()),
@@ -198,7 +226,7 @@ class TofWidget:
         self.toa_wav_ax[1].set(xlabel="Wavelength [Å]", ylabel="Counts")
         self.toa_legend = self.toa_wav_ax[0].legend()
         self.wav_legend = self.toa_wav_ax[1].legend()
-        self.time_distance_fig.tight_layout()
+        # self.time_distance_fig.tight_layout()
         self.toa_wav_fig.tight_layout()
 
         # Clickable legend
