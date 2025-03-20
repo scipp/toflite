@@ -25,6 +25,7 @@ def _add_rays(
     cax: plt.Axes | None = None,
     zorder: int = 1,
 ):
+    print("Adding rays", x.shape, y.shape)
     coll = LineCollection(np.stack((x, y), axis=2), zorder=zorder)
     if isinstance(color, str):
         coll.set_color(color)
@@ -117,10 +118,11 @@ class Result:
                 | furthest_component.data.blocked_by_others[i]
             )
             nblocked = blocked.sum()
-            if self.source.neutrons - nblocked > visible_rays:
-                inds = np.random.choice(ids[~blocked], size=visible_rays, replace=False)
-            else:
-                inds = slice(None)
+            inds = np.random.choice(
+                ids[~blocked],
+                size=min(self.source.neutrons - nblocked, visible_rays),
+                replace=False,
+            )
 
             xstart = self.source.data.birth_time[i][inds]
             xend = furthest_component.data.toa[i][inds]
@@ -138,11 +140,9 @@ class Result:
             )
 
             # Plot blocked rays
-            if nblocked > blocked_rays:
-                inds = np.random.choice(ids[blocked], size=blocked_rays, replace=False)
-            else:
-                inds = slice(None)
-
+            inds = np.random.choice(
+                ids[blocked], size=min(blocked_rays, nblocked), replace=False
+            )
             x = np.repeat(
                 np.stack(
                     [self.source.data.birth_time[i][inds]]

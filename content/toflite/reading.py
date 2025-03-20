@@ -23,9 +23,23 @@ class ReadingField:
             fig = ax.get_figure()
 
         for i in range(len(self.values)):
-            mask = self.blocked_by_me[i] | self.blocked_by_others[i]
-            x = self.values[i][~mask]
-            ax.hist(x, bins=bins, histtype="step", lw=1.5, label=f"Pulse {i}", **kwargs)
+            sel = ~self.blocked_by_others[i]
+            x = self.values[i][sel]
+            bins = np.linspace(x.min(), x.max(), bins + 1)
+            mask = self.blocked_by_me[i][sel]
+            if self.blocked_by_me[i].sum() > 0:
+                ax.hist(
+                    x[mask], bins=bins, histtype="step", lw=1.5, color="gray", **kwargs
+                )
+            ax.hist(
+                x[~mask],
+                bins=bins,
+                histtype="step",
+                lw=1.5,
+                label=f"Pulse {i}",
+                color=f"C{i}",
+                **kwargs,
+            )
         ax.legend()
         ax.set(xlabel=f"{self.name} [{self.unit}]", ylabel="Counts")
         return Plot(fig=fig, ax=ax)
