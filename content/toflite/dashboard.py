@@ -32,7 +32,8 @@ class ChopperWidget(ipw.VBox):
                 self.phase_widget,
                 self.distance_widget,
                 self.direction_widget,
-            ]
+            ],
+            layout={"border": "1px solid lightgray"},
         )
 
 
@@ -40,7 +41,10 @@ class DetectorWidget(ipw.VBox):
     def __init__(self):
         self.distance_widget = ipw.FloatText(description="Distance")
         self.name_widget = ipw.Text(description="Name")
-        super().__init__([self.name_widget, self.distance_widget])
+        super().__init__(
+            [self.name_widget, self.distance_widget],
+            layout={"border": "1px solid lightgray"},
+        )
 
 
 class SourceWidget(ipw.VBox):
