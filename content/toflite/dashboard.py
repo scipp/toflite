@@ -72,9 +72,19 @@ class TofWidget:
 
         self.source_widget = SourceWidget()
 
-        self.choppers_widget = ipw.VBox([ipw.Button(description="Add chopper")])
+        self.choppers_container = ipw.Accordion()
+        self.add_chopper_button = ipw.Button(description="Add chopper")
+        self.add_chopper_button.on_click(self.add_chopper)
+        self.choppers_widget = ipw.VBox(
+            [self.add_chopper_button, self.choppers_container]
+        )
 
-        self.detectors_widget = ipw.VBox([ipw.Button(description="Add detector")])
+        self.detectors_container = ipw.Accordion()
+        self.add_detector_button = ipw.Button(description="Add detector")
+        self.add_detector_button.on_click(self.add_detector)
+        self.detectors_widget = ipw.VBox(
+            [self.add_detector_button, self.detectors_container]
+        )
 
         tab_contents = ["Source", "Choppers", "Detectors"]
         children = [self.source_widget, self.choppers_widget, self.detectors_widget]
@@ -92,15 +102,35 @@ class TofWidget:
 
         self.main_widget = ipw.VBox([self.top_bar, self.toa_wav_fig.canvas])
 
+    def sync_chopper_titles(self, _):
+        self.choppers_container.titles = tuple(
+            f"{c.name_widget.value} ({int(c.frequency_widget.value)}Hz - "
+            f"{c.distance_widget.value:.1f}m)"
+            for c in self.choppers_container.children
+        )
+
     def add_chopper(self, _):
-        children = list(self.choppers_widget.children)
-        children.append(ChopperWidget())
-        self.choppers_widget.children = children
+        new_chopper = ChopperWidget()
+        new_chopper.name_widget.observe(self.sync_chopper_titles)
+        new_chopper.frequency_widget.observe(self.sync_chopper_titles)
+        new_chopper.distance_widget.observe(self.sync_chopper_titles)
+        children = (*self.choppers_container.children, new_chopper)
+        self.choppers_container.children = children
+        self.choppers_container.selected_index = len(children) - 1
+
+    def sync_detector_titles(self, _):
+        self.detectors_container.titles = tuple(
+            f"{d.name_widget.value} ({d.distance_widget.value:.1f}m)"
+            for d in self.detectors_container.children
+        )
 
     def add_detector(self, _):
-        children = list(self.detectors_widget.children)
-        children.append(DetectorWidget())
-        self.detectors_widget.children = children
+        new_detector = DetectorWidget()
+        new_detector.name_widget.observe(self.sync_detector_titles)
+        new_detector.distance_widget.observe(self.sync_detector_titles)
+        children = (*self.detectors_container.children, new_detector)
+        self.detectors_container.children = children
+        self.detectors_container.selected_index = len(children) - 1
 
     def run(self, _):
         source = Source(
@@ -120,12 +150,12 @@ class TofWidget:
                     ch.direction_widget.value
                 ],
             )
-            for ch in self.choppers_widget.children[1:]
+            for ch in self.choppers_container.children
         ]
 
         detectors = [
             Detector(distance=det.distance_widget.value, name=det.name_widget.value)
-            for det in self.detectors_widget.children[1:]
+            for det in self.detectors_container.children
         ]
 
         model = Model(source=source, choppers=choppers, detectors=detectors)

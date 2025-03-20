@@ -25,7 +25,6 @@ def _add_rays(
     cax: plt.Axes | None = None,
     zorder: int = 1,
 ):
-    print("Adding rays", x.shape, y.shape)
     coll = LineCollection(np.stack((x, y), axis=2), zorder=zorder)
     if isinstance(color, str):
         coll.set_color(color)
