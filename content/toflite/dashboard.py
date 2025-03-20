@@ -3,7 +3,6 @@
 import matplotlib.pyplot as plt
 import ipywidgets as ipw
 
-# import toflite as tof
 from itertools import chain
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -44,7 +43,10 @@ class SourceWidget(ipw.VBox):
     def __init__(self):
         self.facility_widget = ipw.Dropdown(options=["ess"], description="Facility")
         self.neutrons_widget = ipw.IntText(value=100_000, description="Neutrons")
-        super().__init__([self.facility_widget, self.neutrons_widget])
+        self.pulses_widget = ipw.IntText(value=1, description="Pulses")
+        super().__init__(
+            [self.facility_widget, self.neutrons_widget, self.pulses_widget]
+        )
 
 
 class TofWidget:
@@ -53,15 +55,12 @@ class TofWidget:
 
         self.run_button = ipw.Button(description="Run")
         with plt.ioff():
-            self.time_distance_fig, self.time_distance_ax = plt.subplots(
-                figsize=(8, 6)
-            )  # ipw.VBox(layout={"width": "820px", "height": "675px"})
+            self.time_distance_fig, self.time_distance_ax = plt.subplots(figsize=(8, 6))
             divider = make_axes_locatable(self.time_distance_ax)
             self.time_distance_cax = divider.append_axes("right", "4%", pad="5%")
             self.toa_wav_fig, self.toa_wav_ax = plt.subplots(1, 2, figsize=(11.5, 3.75))
             self.time_distance_fig.canvas.header_visible = False
             self.toa_wav_fig.canvas.header_visible = False
-        # self.toa_wav_plot_area = self.toa_wav_fig.canvas
 
         self.source_widget = SourceWidget()
 
@@ -70,7 +69,6 @@ class TofWidget:
         self.detectors_widget = ipw.VBox([ipw.Button(description="Add detector")])
 
         tab_contents = ["Source", "Choppers", "Detectors"]
-        # children = [ipw.Text(description=name) for name in tab_contents]
         children = [self.source_widget, self.choppers_widget, self.detectors_widget]
         self.tab = ipw.Tab()
         self.tab.children = children
@@ -86,20 +84,21 @@ class TofWidget:
 
         self.main_widget = ipw.VBox([self.top_bar, self.toa_wav_fig.canvas])
 
-    def add_chopper(self, owner):
+    def add_chopper(self, _):
         children = list(self.choppers_widget.children)
         children.append(ChopperWidget())
         self.choppers_widget.children = children
 
-    def add_detector(self, owner):
+    def add_detector(self, _):
         children = list(self.detectors_widget.children)
         children.append(DetectorWidget())
         self.detectors_widget.children = children
 
-    def run(self, owner):
+    def run(self, _):
         source = Source(
             facility=self.source_widget.facility_widget.value,
             neutrons=int(self.source_widget.neutrons_widget.value),
+            pulses=int(self.source_widget.pulses_widget.value),
         )
         choppers = [
             Chopper(
@@ -123,7 +122,6 @@ class TofWidget:
         self.time_distance_ax.clear()
         self.time_distance_cax.clear()
         self.results.plot(ax=self.time_distance_ax, cax=self.time_distance_cax)
-        # self.time_distance_plot_area.children = [ipw.HBox([self.results.plot(figsize=(8, 6)).fig.canvas])]
 
         components = sorted(
             chain(self.results.choppers.values(), self.results.detectors.values()),
