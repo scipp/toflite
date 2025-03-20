@@ -78,7 +78,7 @@ class TofWidget:
 
         tab_contents = ["Source", "Choppers", "Detectors"]
         children = [self.source_widget, self.choppers_widget, self.detectors_widget]
-        self.tab = ipw.Tab()
+        self.tab = ipw.Tab(layout={"height": "700px"})
         self.tab.children = children
         self.tab.titles = tab_contents
         self.top_bar.children = [
@@ -166,10 +166,38 @@ class TofWidget:
 
         self.toa_wav_ax[0].set(xlabel="Time-of-arrival [μs]", ylabel="Counts")
         self.toa_wav_ax[1].set(xlabel="Wavelength [Å]", ylabel="Counts")
-        self.toa_wav_ax[0].legend()
-        self.toa_wav_ax[1].legend()
+        self.toa_legend = self.toa_wav_ax[0].legend()
+        self.wav_legend = self.toa_wav_ax[1].legend()
         self.time_distance_fig.tight_layout()
         self.toa_wav_fig.tight_layout()
+
+        # Clickable legend
+        self.map_legend_to_ax = {}
+        for i, (toa_patch, wav_patch) in enumerate(
+            zip(self.toa_legend.get_patches(), self.wav_legend.get_patches())
+        ):
+            toa_patch.set_picker(5)
+            wav_patch.set_picker(5)
+            self.map_legend_to_ax[toa_patch] = i
+            self.map_legend_to_ax[wav_patch] = i
+        self.toa_wav_fig.canvas.mpl_connect("pick_event", self.on_legend_pick)
+
+    def on_legend_pick(self, event):
+        legend_patch = event.artist
+
+        # Do nothing if the source of the event is not a legend line.
+        if legend_patch not in self.map_legend_to_ax:
+            return
+
+        ind = self.map_legend_to_ax[legend_patch]
+        for ax in self.toa_wav_ax:
+            patch = ax.patches[ind]
+            visible = not patch.get_visible()
+            patch.set_visible(visible)
+        alpha = 1.0 if visible else 0.2
+        self.toa_legend.get_patches()[ind].set_alpha(alpha)
+        self.wav_legend.get_patches()[ind].set_alpha(alpha)
+        self.toa_wav_fig.canvas.draw_idle()
 
 
 def app():
