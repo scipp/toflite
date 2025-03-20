@@ -7,7 +7,7 @@ from itertools import chain
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from .source import Source
-from .chopper import Chopper
+from .chopper import Chopper, Clockwise, AntiClockwise
 from .detector import Detector
 from .model import Model
 
@@ -20,6 +20,9 @@ class ChopperWidget(ipw.VBox):
         self.phase_widget = ipw.FloatText(description="Phase")
         self.distance_widget = ipw.FloatText(description="Distance")
         self.name_widget = ipw.Text(description="Name")
+        self.direction_widget = ipw.Dropdown(
+            options=["clockwise", "anti-clockwise"], description="Direction"
+        )
         super().__init__(
             [
                 self.name_widget,
@@ -28,6 +31,7 @@ class ChopperWidget(ipw.VBox):
                 self.close_widget,
                 self.phase_widget,
                 self.distance_widget,
+                self.direction_widget,
             ]
         )
 
@@ -108,6 +112,9 @@ class TofWidget:
                 phase=ch.phase_widget.value,
                 distance=ch.distance_widget.value,
                 name=ch.name_widget.value,
+                direction={"clockwise": Clockwise, "anti-clockwise": AntiClockwise}[
+                    ch.direction_widget.value
+                ],
             )
             for ch in self.choppers_widget.children[1:]
         ]
