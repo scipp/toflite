@@ -25,15 +25,15 @@ class ReadingField:
         for i in range(len(self.values)):
             sel = ~self.blocked_by_others[i]
             x = self.values[i][sel]
-            bins = np.linspace(x.min(), x.max(), bins + 1)
+            edges = np.linspace(x.min(), x.max(), bins + 1)
             mask = self.blocked_by_me[i][sel]
             if self.blocked_by_me[i].sum() > 0:
                 ax.hist(
-                    x[mask], bins=bins, histtype="step", lw=1.5, color="gray", **kwargs
+                    x[mask], bins=edges, histtype="step", lw=1.5, color="gray", **kwargs
                 )
             ax.hist(
                 x[~mask],
-                bins=bins,
+                bins=edges,
                 histtype="step",
                 lw=1.5,
                 label=f"Pulse {i}",
