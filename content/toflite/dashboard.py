@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
+import uuid
 import matplotlib.pyplot as plt
 import ipywidgets as ipw
 
+from functools import partial
 from itertools import chain
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -14,6 +16,7 @@ from .model import Model
 
 class ChopperWidget(ipw.VBox):
     def __init__(self):
+        self._uid = uuid.uuid4()
         self.frequency_widget = ipw.FloatText(
             description="Frequency", continuous_update=True
         )
@@ -27,6 +30,15 @@ class ChopperWidget(ipw.VBox):
         self.direction_widget = ipw.Dropdown(
             options=["clockwise", "anti-clockwise"], description="Direction"
         )
+        self.enabled_widget = ipw.Checkbox(
+            value=True, indent=False, layout={"width": "100px"}
+        )
+        self.delete_widget = ipw.Button(
+            icon="trash-alt", tooltip="Delete chopper", layout={"width": "40px"}
+        )
+        # self.toggle_widget = ipw.Dropdown(
+        #     options=["Enabled", "Disabled"], description="", layout={"width": "100px"}
+        # )
         super().__init__(
             [
                 self.name_widget,
@@ -36,19 +48,48 @@ class ChopperWidget(ipw.VBox):
                 self.phase_widget,
                 self.distance_widget,
                 self.direction_widget,
+                ipw.HBox(
+                    [
+                        ipw.Label(value="Enabled"),
+                        self.enabled_widget,
+                        self.delete_widget,
+                    ]
+                ),
             ],
-            layout={"border": "1px solid lightgray"},
+            layout={
+                "border": "1px solid lightgray",
+                "display": "flex",
+                "flex_flow": "column",
+                "align_items": "flex-end",
+            },
         )
 
 
 class DetectorWidget(ipw.VBox):
     def __init__(self):
+        self._uid = uuid.uuid4()
         self.distance_widget = ipw.FloatText(
             description="Distance", continuous_update=True
         )
         self.name_widget = ipw.Text(description="Name")
+        self.enabled_widget = ipw.Checkbox(
+            value=True, indent=False, layout={"width": "100px"}
+        )
+        self.delete_widget = ipw.Button(
+            icon="trash-alt", tooltip="Delete detector", layout={"width": "40px"}
+        )
         super().__init__(
-            [self.name_widget, self.distance_widget],
+            [
+                self.name_widget,
+                self.distance_widget,
+                ipw.HBox(
+                    [
+                        ipw.Label(value="Enabled"),
+                        self.enabled_widget,
+                        self.delete_widget,
+                    ]
+                ),
+            ],
             layout={"border": "1px solid lightgray"},
         )
 
@@ -133,9 +174,17 @@ class TofWidget:
         new_chopper.name_widget.observe(self.sync_chopper_titles)
         new_chopper.frequency_widget.observe(self.sync_chopper_titles, names="value")
         new_chopper.distance_widget.observe(self.sync_chopper_titles, names="value")
+        new_chopper.delete_widget.on_click(
+            partial(self.remove_chopper, uid=new_chopper._uid)
+        )
         children = (*self.choppers_container.children, new_chopper)
         self.choppers_container.children = children
         self.choppers_container.selected_index = len(children) - 1
+
+    def remove_chopper(self, _, uid):
+        self.choppers_container.children = tuple(
+            c for c in self.choppers_container.children if c._uid != uid
+        )
 
     def sync_detector_titles(self, _):
         self.detectors_container.titles = tuple(
@@ -147,9 +196,17 @@ class TofWidget:
         new_detector = DetectorWidget()
         new_detector.name_widget.observe(self.sync_detector_titles, names="value")
         new_detector.distance_widget.observe(self.sync_detector_titles, names="value")
+        new_detector.delete_widget.on_click(
+            partial(self.remove_detector, uid=new_detector._uid)
+        )
         children = (*self.detectors_container.children, new_detector)
         self.detectors_container.children = children
         self.detectors_container.selected_index = len(children) - 1
+
+    def remove_detector(self, _, uid):
+        self.detectors_container.children = tuple(
+            d for d in self.detectors_container.children if d._uid != uid
+        )
 
     def plot_time_distance(self, _=None):
         self.time_distance_ax.clear()
@@ -181,11 +238,13 @@ class TofWidget:
                 ],
             )
             for ch in self.choppers_container.children
+            if ch.enabled_widget.value
         ]
 
         detectors = [
             Detector(distance=det.distance_widget.value, name=det.name_widget.value)
             for det in self.detectors_container.children
+            if det.enabled_widget.value
         ]
 
         model = Model(source=source, choppers=choppers, detectors=detectors)
