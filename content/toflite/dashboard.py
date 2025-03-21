@@ -216,6 +216,13 @@ class TofWidget:
             for c in self.choppers_container.children
         )
 
+    def update_tab_titles(self):
+        self.tab.titles = [
+            self.tab.titles[0],
+            f"Choppers ({len(self.choppers_container.children)})",
+            f"Detectors ({len(self.detectors_container.children)})",
+        ]
+
     def add_chopper(self, _):
         new_chopper = ChopperWidget()
         new_chopper.name_widget.observe(self.sync_chopper_titles)
@@ -228,11 +235,13 @@ class TofWidget:
         children = (*self.choppers_container.children, new_chopper)
         self.choppers_container.children = children
         self.choppers_container.selected_index = len(children) - 1
+        self.update_tab_titles()
 
     def remove_chopper(self, _, uid):
         self.choppers_container.children = tuple(
             c for c in self.choppers_container.children if c._uid != uid
         )
+        self.update_tab_titles()
         self.maybe_update(None)
 
     def sync_detector_titles(self, _):
@@ -252,11 +261,13 @@ class TofWidget:
         children = (*self.detectors_container.children, new_detector)
         self.detectors_container.children = children
         self.detectors_container.selected_index = len(children) - 1
+        self.update_tab_titles()
 
     def remove_detector(self, _, uid):
         self.detectors_container.children = tuple(
             d for d in self.detectors_container.children if d._uid != uid
         )
+        self.update_tab_titles()
         self.maybe_update(None)
 
     def plot_time_distance(self, _=None):
@@ -279,8 +290,10 @@ class TofWidget:
         choppers = [
             Chopper(
                 frequency=ch.frequency_widget.value,
-                open=[float(v) for v in ch.open_widget.value.split(",")],
-                close=[float(v) for v in ch.close_widget.value.split(",")],
+                open=[float(v) for v in ch.open_widget.value.replace(",", " ").split()],
+                close=[
+                    float(v) for v in ch.close_widget.value.replace(",", " ").split()
+                ],
                 phase=ch.phase_widget.value,
                 distance=ch.distance_widget.value,
                 name=ch.name_widget.value,
@@ -374,4 +387,17 @@ class TofWidget:
 
 
 def app():
-    return TofWidget().main_widget
+    w = TofWidget()
+    w.add_chopper_button.click()
+    ch = w.choppers_container.children[0]
+    ch.frequency_widget.value = 48.0
+    ch.open_widget.value = "10, 50, 150, 270"
+    ch.close_widget.value = "50, 90, 190, 320"
+    ch.distance_widget.value = 10.0
+    ch.name_widget.value = "ChopChop"
+    w.add_detector_button.click()
+    d = w.detectors_container.children[0]
+    d.distance_widget.value = 35.0
+    d.name_widget.value = "Monitor"
+    w.run(None)
+    return w.main_widget
