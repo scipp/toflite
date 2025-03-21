@@ -155,6 +155,11 @@ class TofWidget:
             self.time_distance_fig.canvas.header_visible = False
             self.toa_wav_fig.canvas.header_visible = False
             self._legend_pick_connection = None
+            self.toa_wav_fig.canvas.toolbar.toggle_yscale = self.toggle_yscale
+            self.toa_wav_fig.canvas.toolbar.toolitems = [
+                *self.toa_wav_fig.canvas.toolbar.toolitems,
+                ("Logy", "Toggle log scale", "arrows-alt-v", "toggle_yscale"),
+            ]
 
         self.source_widget = SourceWidget()
         self.source_widget.continuous_update(self.maybe_update)
@@ -202,6 +207,11 @@ class TofWidget:
         self.blocked_rays.observe(self.plot_time_distance, names="value")
 
         self.main_widget = ipw.VBox([self.top_bar, self.toa_wav_fig.canvas])
+
+    def toggle_yscale(self):
+        scale = "log" if self.toa_wav_ax[0].get_yscale() == "linear" else "linear"
+        self.toa_wav_ax[0].set_yscale(scale)
+        self.toa_wav_ax[1].set_yscale(scale)
 
     def maybe_update(self, _):
         if self.continuous_update.value:
