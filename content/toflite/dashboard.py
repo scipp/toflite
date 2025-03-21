@@ -36,9 +36,6 @@ class ChopperWidget(ipw.VBox):
         self.delete_widget = ipw.Button(
             icon="trash-alt", tooltip="Delete chopper", layout={"width": "40px"}
         )
-        # self.toggle_widget = ipw.Dropdown(
-        #     options=["Enabled", "Disabled"], description="", layout={"width": "100px"}
-        # )
         super().__init__(
             [
                 self.name_widget,
@@ -63,6 +60,15 @@ class ChopperWidget(ipw.VBox):
                 "align_items": "flex-end",
             },
         )
+
+    def continuous_update(self, callback):
+        self.frequency_widget.observe(callback, names="value")
+        self.phase_widget.observe(callback, names="value")
+        self.distance_widget.observe(callback, names="value")
+        self.open_widget.observe(callback, names="value")
+        self.close_widget.observe(callback, names="value")
+        self.direction_widget.observe(callback, names="value")
+        self.enabled_widget.observe(callback, names="value")
 
 
 class DetectorWidget(ipw.VBox):
@@ -90,8 +96,17 @@ class DetectorWidget(ipw.VBox):
                     ]
                 ),
             ],
-            layout={"border": "1px solid lightgray"},
+            layout={
+                "border": "1px solid lightgray",
+                "display": "flex",
+                "flex_flow": "column",
+                "align_items": "flex-end",
+            },
         )
+
+    def continuous_update(self, callback):
+        self.distance_widget.observe(callback, names="value")
+        self.enabled_widget.observe(callback, names="value")
 
 
 class SourceWidget(ipw.VBox):
@@ -103,17 +118,34 @@ class SourceWidget(ipw.VBox):
             [self.facility_widget, self.neutrons_widget, self.pulses_widget]
         )
 
+    def continuous_update(self, callback):
+        self.facility_widget.observe(callback, names="value")
+        self.neutrons_widget.observe(callback, names="value")
+        self.pulses_widget.observe(callback, names="value")
+
 
 class TofWidget:
     def __init__(self):
         self.top_bar = ipw.HBox()
 
         self.run_button = ipw.Button(description="Run")
+        self.continuous_update = ipw.Checkbox(
+            description="Continuous update",
+            value=False,
+            indent=False,
+            layout={"width": "180px"},
+        )
         self.visible_rays = ipw.IntText(
-            description="Visible rays", value=1000, continuous_update=True
+            description="Visible rays",
+            value=1000,
+            continuous_update=True,
+            layout={"width": "200px"},
         )
         self.blocked_rays = ipw.IntText(
-            description="Blocked rays", value=0, continuous_update=True
+            description="Blocked rays",
+            value=0,
+            continuous_update=True,
+            layout={"width": "200px"},
         )
         with plt.ioff():
             self.time_distance_fig, self.time_distance_ax = plt.subplots(figsize=(8, 6))
@@ -122,8 +154,10 @@ class TofWidget:
             self.toa_wav_fig, self.toa_wav_ax = plt.subplots(1, 2, figsize=(11.5, 3.75))
             self.time_distance_fig.canvas.header_visible = False
             self.toa_wav_fig.canvas.header_visible = False
+            self._legend_pick_connection = None
 
         self.source_widget = SourceWidget()
+        self.source_widget.continuous_update(self.maybe_update)
 
         self.choppers_container = ipw.Accordion()
         self.add_chopper_button = ipw.Button(description="Add chopper")
@@ -141,13 +175,20 @@ class TofWidget:
 
         tab_contents = ["Source", "Choppers", "Detectors"]
         children = [self.source_widget, self.choppers_widget, self.detectors_widget]
-        self.tab = ipw.Tab(layout={"height": "700px"})
+        self.tab = ipw.Tab(layout={"height": "650px", "width": "374px"})
         self.tab.children = children
         self.tab.titles = tab_contents
         self.top_bar.children = [
             ipw.VBox(
                 [
-                    ipw.HBox([self.run_button, self.visible_rays, self.blocked_rays]),
+                    ipw.HBox(
+                        [
+                            self.run_button,
+                            self.continuous_update,
+                            self.visible_rays,
+                            self.blocked_rays,
+                        ]
+                    ),
                     self.time_distance_fig.canvas,
                 ]
             ),
@@ -161,6 +202,12 @@ class TofWidget:
         self.blocked_rays.observe(self.plot_time_distance, names="value")
 
         self.main_widget = ipw.VBox([self.top_bar, self.toa_wav_fig.canvas])
+
+    def maybe_update(self, _):
+        if self.continuous_update.value:
+            self.run(None)
+        else:
+            self.run_button.style = {"button_color": "lightgreen"}
 
     def sync_chopper_titles(self, _):
         self.choppers_container.titles = tuple(
@@ -177,6 +224,7 @@ class TofWidget:
         new_chopper.delete_widget.on_click(
             partial(self.remove_chopper, uid=new_chopper._uid)
         )
+        new_chopper.continuous_update(self.maybe_update)
         children = (*self.choppers_container.children, new_chopper)
         self.choppers_container.children = children
         self.choppers_container.selected_index = len(children) - 1
@@ -185,6 +233,7 @@ class TofWidget:
         self.choppers_container.children = tuple(
             c for c in self.choppers_container.children if c._uid != uid
         )
+        self.maybe_update(None)
 
     def sync_detector_titles(self, _):
         self.detectors_container.titles = tuple(
@@ -199,6 +248,7 @@ class TofWidget:
         new_detector.delete_widget.on_click(
             partial(self.remove_detector, uid=new_detector._uid)
         )
+        new_detector.continuous_update(self.maybe_update)
         children = (*self.detectors_container.children, new_detector)
         self.detectors_container.children = children
         self.detectors_container.selected_index = len(children) - 1
@@ -207,6 +257,7 @@ class TofWidget:
         self.detectors_container.children = tuple(
             d for d in self.detectors_container.children if d._uid != uid
         )
+        self.maybe_update(None)
 
     def plot_time_distance(self, _=None):
         self.time_distance_ax.clear()
@@ -258,6 +309,8 @@ class TofWidget:
 
         self.toa_wav_ax[0].clear()
         self.toa_wav_ax[1].clear()
+        if self._legend_pick_connection is not None:
+            self.toa_wav_fig.canvas.mpl_disconnect(self._legend_pick_connection)
         for p in range(source.pulses):
             for i, c in enumerate(components):
                 label = c.name if p == 0 else None
@@ -285,7 +338,6 @@ class TofWidget:
         self.toa_wav_ax[1].set(xlabel="Wavelength [Å]", ylabel="Counts")
         self.toa_legend = self.toa_wav_ax[0].legend()
         self.wav_legend = self.toa_wav_ax[1].legend()
-        # self.time_distance_fig.tight_layout()
         self.toa_wav_fig.tight_layout()
 
         # Clickable legend
@@ -297,7 +349,11 @@ class TofWidget:
             wav_patch.set_picker(5)
             self.map_legend_to_ax[toa_patch] = i
             self.map_legend_to_ax[wav_patch] = i
-        self.toa_wav_fig.canvas.mpl_connect("pick_event", self.on_legend_pick)
+        self._legend_pick_connection = self.toa_wav_fig.canvas.mpl_connect(
+            "pick_event", self.on_legend_pick
+        )
+
+        self.run_button.style = {"button_color": "#eeeeee"}
 
     def on_legend_pick(self, event):
         legend_patch = event.artist
