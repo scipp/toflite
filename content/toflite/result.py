@@ -22,6 +22,8 @@ def _add_rays(
     color: np.ndarray | str,
     cbar: bool = True,
     cmap: str = "gist_rainbow_r",
+    vmin: float | None = None,
+    vmax: float | None = None,
     cax: plt.Axes | None = None,
     zorder: int = 1,
 ):
@@ -31,6 +33,7 @@ def _add_rays(
     else:
         coll.set_cmap(plt.colormaps[cmap])
         coll.set_array(color)
+        coll.set_norm(plt.Normalize(vmin, vmax))
         if cbar:
             cb = plt.colorbar(coll, ax=ax, cax=cax)
             cb.ax.yaxis.set_label_coords(-0.9, 0.5)
@@ -109,6 +112,13 @@ class Result:
 
         repeats = [1] + [2] * len(components)
 
+        mask = (
+            furthest_component.data.blocked_by_me
+            | furthest_component.data.blocked_by_others
+        )
+        wavelengths = furthest_component.data.wavelength[~mask]
+        vmin, vmax = wavelengths.min(), wavelengths.max()
+
         for i in range(self.source.pulses):
             ids = np.arange(self.source.neutrons)
             # Plot visible rays
@@ -135,6 +145,8 @@ class Result:
                 color=self.source.data.wavelength[i][inds],
                 cbar=cbar and (i == 0),
                 cmap=cmap,
+                vmin=vmin,
+                vmax=vmax,
                 cax=cax,
             )
 
