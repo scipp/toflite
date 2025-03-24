@@ -4,7 +4,6 @@ from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.interpolate import interp1d
 
 from .facilities import library as facilities
 from .utils import NeutronData, Plot, wavelength_to_speed
@@ -60,13 +59,11 @@ def _make_pulses(
     if wmax is None:
         wmax = p_wav[:, 0].max()
 
-    time_interpolator = interp1d(p_time[:, 0], p_time[:, 1], fill_value="extrapolate")
-    wav_interpolator = interp1d(p_wav[:, 0], p_wav[:, 1], fill_value="extrapolate")
     x_time = np.linspace(start=tmin, stop=tmax, num=sampling)
     x_wav = np.linspace(start=wmin, stop=wmax, num=sampling)
-    p_time = time_interpolator(x_time)
+    p_time = np.interp(x_time, p_time[:, 0], p_time[:, 1])
     p_time /= p_time.sum()
-    p_wav = wav_interpolator(x_wav)
+    p_wav = np.interp(x_wav, p_wav[:, 0], p_wav[:, 1])
     p_wav /= p_wav.sum()
 
     # In the following, random.choice only allows to select from the values listed

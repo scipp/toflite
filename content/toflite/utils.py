@@ -4,10 +4,10 @@ from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.constants as const
 
-h_over_m = const.h / const.m_n
-two_pi = const.pi * 2.0
+m_n = 1.67492750056e-27
+h = 6.62607015e-34
+h_over_m = h / m_n
 
 
 def speed_to_wavelength(speed: np.ndarray) -> np.ndarray:
