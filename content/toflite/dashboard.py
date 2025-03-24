@@ -340,7 +340,7 @@ class TofWidget:
                 toa = c.data.toa[p]
                 wav = c.data.wavelength[p]
                 sel = ~(c.data.blocked_by_me[p] | c.data.blocked_by_others[p])
-                self.toa_wav_ax[0].hist(
+                _, _, toa_patches = self.toa_wav_ax[0].hist(
                     toa[sel],
                     bins=300,
                     histtype="step",
@@ -348,7 +348,7 @@ class TofWidget:
                     color=f"C{i}",
                     label=label,
                 )
-                self.toa_wav_ax[1].hist(
+                _, _, wav_patches = self.toa_wav_ax[1].hist(
                     wav[sel],
                     bins=300,
                     histtype="step",
@@ -356,6 +356,8 @@ class TofWidget:
                     color=f"C{i}",
                     label=label,
                 )
+                for patch in chain(toa_patches, wav_patches):
+                    patch._component_id = i
 
         self.toa_wav_ax[0].set(xlabel="Time-of-arrival [μs]", ylabel="Counts")
         self.toa_wav_ax[1].set(xlabel="Wavelength [Å]", ylabel="Counts")
@@ -380,16 +382,15 @@ class TofWidget:
 
     def on_legend_pick(self, event):
         legend_patch = event.artist
-
         # Do nothing if the source of the event is not a legend line.
         if legend_patch not in self.map_legend_to_ax:
             return
-
         ind = self.map_legend_to_ax[legend_patch]
         for ax in self.toa_wav_ax:
-            patch = ax.patches[ind]
-            visible = not patch.get_visible()
-            patch.set_visible(visible)
+            for patch in ax.patches:
+                if patch._component_id == ind:
+                    visible = not patch.get_visible()
+                    patch.set_visible(visible)
         alpha = 1.0 if visible else 0.2
         self.toa_legend.get_patches()[ind].set_alpha(alpha)
         self.wav_legend.get_patches()[ind].set_alpha(alpha)
